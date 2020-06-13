@@ -94,10 +94,10 @@ weights = os.environ.get("weights_file")
 #net = darknet.load_net(bytes(configPath, "ascii"), bytes(weightPath, "ascii"), 0)
 #meta = darknet.load_meta(bytes(metaPath, "ascii"))
 imgsz= int(os.environ.get("img_size"))
-src_device=''
-half=True
-classify=False
-augment=False
+src_device=os.environ.get("device")
+half=(os.environ.get("half").lower() == 'true')
+classify=(os.environ.get("classify").lower() == 'true')
+augment=(os.environ.get("augment").lower() == 'true')
 
 # Initialize
 device = torch_utils.select_device(src_device)
