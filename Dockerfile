@@ -34,7 +34,7 @@ ENV agnostic_nms=False
 ENV device=
 ENV half=False
 ENV iou_thres=0.5
-
+ENV classify=False
 
 
 COPY app.py .
