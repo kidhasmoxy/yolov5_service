@@ -6,9 +6,11 @@ import urllib.request
 import tempfile
 import ast
 
+import torch.backends.cudnn as cudnn
+
+from utils import google_utils
 from utils.datasets import *
 from utils.utils import *
-import torch.backends.cudnn as cudnn
 
 
 # Setup handler to catch SIGTERM from Docker
@@ -104,7 +106,7 @@ iou_thres=float(os.environ.get("iou_thres"))
 device = torch_utils.select_device(src_device)
 
 # Load model
-google_utils.attempt_download(weights)
+# google_utils.attempt_download(weights)
 model = torch.load(weights, map_location=device)['model'].float()  # load to FP32
 #torch.save(torch.load(weights, map_location=device), weights)  # update model if SourceChangeWarning
 # model.fuse()
