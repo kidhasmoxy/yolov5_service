@@ -18,7 +18,7 @@ def sigterm_handler(_signo, _stack_frame):
         print('Sigterm caught - closing down')
         sys.exit()
 
-def detect(img0s, threshold, iou_thres=0.5 ):
+def detect(img0s, threshold, iou_threshold=0.5 ):
 
     # Padded resize
     img = letterbox(img0s, new_shape=imgsz)[0]
@@ -37,8 +37,7 @@ def detect(img0s, threshold, iou_thres=0.5 ):
 
 
     # Apply NMS
-    pred = non_max_suppression(pred, threshold, iou_thres,
-                            fast=True, classes=None, agnostic=False)
+    pred = non_max_suppression(pred, threshold, iou_threshold, classes=None, agnostic=False)
 
     # Apply Classifier
     if classify:
