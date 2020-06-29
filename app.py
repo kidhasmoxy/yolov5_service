@@ -8,6 +8,8 @@ import ast
 
 from utils.datasets import *
 from utils.utils import *
+import torch.backends.cudnn as cudnn
+
 
 # Setup handler to catch SIGTERM from Docker
 def sigterm_handler(_signo, _stack_frame):
@@ -22,6 +24,7 @@ def detect(img0s, threshold, iou_thres=0.5 ):
     # Convert
     img = img[:, :, ::-1].transpose(2, 0, 1)  # BGR to RGB, to 3x416x416
     img = np.ascontiguousarray(img)
+    # Inference
     img = torch.from_numpy(img).to(device)
     img = img.half() if half else img.float()  # uint8 to fp16/32
     img /= 255.0  # 0 - 255 to 0.0 - 1.0
@@ -30,12 +33,10 @@ def detect(img0s, threshold, iou_thres=0.5 ):
 
     pred = model(img, augment=augment)[0]
 
-    if half:
-            pred = pred.float()
 
     # Apply NMS
     pred = non_max_suppression(pred, threshold, iou_thres,
-                            fast=True, classes=None, agnostic=None)
+                            fast=True, classes=None, agnostic=False)
 
     # Apply Classifier
     if classify:
@@ -92,7 +93,7 @@ def detect_from_file():
 #configPath = os.environ.get("config_file")
 weights = os.environ.get("weights_file")
 
-imgsz= int(os.environ.get("img_size"))
+imgsz=check_img_size(int(os.environ.get("img_size")))
 src_device=os.environ.get("device")
 half=(os.environ.get("half").lower() == 'true')
 classify=(os.environ.get("classify").lower() == 'true')
@@ -104,20 +105,21 @@ device = torch_utils.select_device(src_device)
 
 # Load model
 google_utils.attempt_download(weights)
-model = torch.load(weights, map_location=device)['model']
-torch.save(torch.load(weights, map_location=device), weights)  # update model if SourceChangeWarning
-model.fuse()
+model = torch.load(weights, map_location=device)['model'].float()  # load to FP32
+#torch.save(torch.load(weights, map_location=device), weights)  # update model if SourceChangeWarning
+# model.fuse()
 
 model.to(device).eval()
 
 # Second-stage classifier
 if classify:
     modelc = torch_utils.load_classifier(name='resnet101', n=2)  # initialize
+    google_utils.attempt_download('resnet101')
     modelc.load_state_dict(torch.load('weights/resnet101.pt', map_location=device)['model'])  # load weights
     modelc.to(device).eval()
 
 # Half precision
-half = half and device.type != 'cpu'  # half precision only supported on CUDA
+half = device.type != 'cpu'  # half precision only supported on CUDA
 if half:
     model.half()
 
@@ -127,7 +129,7 @@ colors = [[random.randint(0, 255) for _ in range(3)] for _ in range(len(names))]
 
 # prepare inference
 img = torch.zeros((1, 3, imgsz, imgsz), device=device)  # init img
-_ = model(img.half() if half else img.float()) if device.type != 'cpu' else None  # run once
+_ = model(img.half() if half else img) if device.type != 'cpu' else None  # run once
 
 # Create API:
 app = connexion.App(__name__)

@@ -9,14 +9,16 @@ WORKDIR /usr/src/app
 # Install api requirements
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir pretrainedmodels
 
 # Get weights
-RUN python3 -c "from utils.google_utils import *; \
-attempt_download('weights/yolov5s.pt'); \
-attempt_download('weights/yolov5m.pt'); \
-attempt_download('weights/yolov5l.pt'); \
-attempt_download('weights/yolov5x.pt'); \
-attempt_download('weights/yolov3-spp.pt')"
+#RUN python3 -c "from utils.google_utils import *; \
+#attempt_download('weights/yolov5s.pt'); \
+#attempt_download('weights/yolov5m.pt'); \
+#attempt_download('weights/yolov5l.pt'); \
+#attempt_download('weights/yolov5x.pt'); \
+#attempt_download('weights/yolov3-spp.pt')"
+RUN ./weights/download_weights.sh
 
 # Model to use (defaults to yolov5):
 ARG weights_file="weights/yolov5l.pt"
